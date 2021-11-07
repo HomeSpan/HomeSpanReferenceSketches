@@ -84,6 +84,15 @@ struct Head : Service::Valve {
     return(true);
   }
 
+  void loop() override {
+    if(active->getVal() && (active->timeVal() > setDuration->getVal()*1000)){
+      Serial.printf("Head '%s' is closing (%d-second timer is complete)\n",name->getString(),setDuration->getVal());
+      active->setVal(0);
+      inUse->setVal(0);
+      remainingDuration->setVal(0);
+    }
+  }
+
 };
 
 struct Sprinkler : Service::IrrigationSystem {
