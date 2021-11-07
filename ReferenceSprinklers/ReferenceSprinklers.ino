@@ -89,55 +89,8 @@ struct Head : Service::Valve {
 struct Sprinkler : Service::IrrigationSystem {
 
   SpanCharacteristic *active=new Characteristic::Active(0);
-  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(30);
-  SpanCharacteristic *inUse=new Characteristic::InUse(0);
-  SpanCharacteristic *programMode=new Characteristic::ProgramMode(2);
-
-  boolean update() override {
-
-    if(active->updated()){
-      Serial.printf("Sprinkler Active=%d\n",active->getNewVal());
-    }
-
-    return(true);
-  }
-    
-  void loop() override {
-    int nHeadsInUse=0;
-    int nHeadsActive=0;
-    
-    for(auto s : linkedServices){
-      Head *head=(Head *)s;
-      nHeadsInUse+=head->inUse->getVal();
-      nHeadsActive+=head->active->getVal();
-//      Serial.printf("%d %d %d\n",nHeadsInUse,nHeadsActive,active->getVal());
-//      delay(1000);
-    }
-
-//    if(nHeadsActive && !active->getVal()){
-//      Serial.printf("Sprinkler is ACTIVE\n");
-//      active->setVal(1);
-//    } else 
-//    
-//    if(!nHeadsActive && active->getVal()){
-//      Serial.printf("Sprinkler is NOT ACTIVE \n");
-//      active->setVal(0);
-//    }
-    
-    if(nHeadsInUse && !inUse->getVal()){
-    Serial.printf("Sprinkler is IN USE\n");
-      inUse->setVal(1);
-      remainingDuration->setVal(30);
-    } else 
-    
-    if(!nHeadsInUse && inUse->getVal()){
-      Serial.printf("Sprinkler is NOT IN USE \n");
-      inUse->setVal(0);
-      remainingDuration->setVal(0);
-    }
-
-  }
-   
+  SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);
+  
 };
 
 //////////////////////////////////////
