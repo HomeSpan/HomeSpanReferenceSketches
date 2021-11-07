@@ -28,9 +28,9 @@
  
   ////////////////////////////////////////////////////////
   //                                                    //
-  //    HomeSpan Reference SHOWER Sketch:               //
+  //    HomeSpan Reference SPRINKLERS Sketch:           //
   //                                                    //
-  //    * FAUCET Service                                //
+  //    * IRRIGATION Service                            //
   //    * Multiple linked VALVE Services                //
   //                                                    //  
   ////////////////////////////////////////////////////////
@@ -38,16 +38,18 @@
  
 #include "HomeSpan.h" 
 
-struct Sprayer : Service::Valve {
+struct Head : Service::Valve {
 
   SpanCharacteristic *active=new Characteristic::Active(0);
   SpanCharacteristic *inUse=new Characteristic::InUse(0);
   SpanCharacteristic *enabled = new Characteristic::IsConfigured(1);
+  SpanCharacteristic *setDuration = new Characteristic::SetDuration(30);
+  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(0);
   SpanCharacteristic *name;
 
-  Sprayer(const char *sprayerName) : Service::Valve() {
-    new Characteristic::ValveType(2);
-    name=new Characteristic::ConfiguredName(sprayerName);
+  Head(const char *headName) : Service::Valve() {
+    new Characteristic::ValveType(1);
+    name=new Characteristic::ConfiguredName(headName);
     enabled->perms|=PW;
   }
 
@@ -55,21 +57,28 @@ struct Sprayer : Service::Valve {
     
     if(enabled->updated()){
       if(enabled->getNewVal()){
-        Serial.printf("Sprayer '%s' enabled\n",name->getString());
+        Serial.printf("Head '%s' enabled\n",name->getString());
       } else {
-        Serial.printf("Sprayer '%s' disabled\n",name->getString());          
+        Serial.printf("Head '%s' disabled\n",name->getString());          
         if(active->getVal()){
           active->setVal(0);
-          Serial.printf("Sprayer '%s' valve is closing\n",name->getString());          
+          inUse->setVal(0);
+          remainingDuration->setVal(0);
+          Serial.printf("Head '%s' valve is closing\n",name->getString());          
         }
       }
     }
 
     if(active->updated()){
-      if(active->getNewVal())
-        Serial.printf("Sprayer '%s' valve is opening\n",name->getString());
-      else
-        Serial.printf("Sprayer '%s' valve is closing\n",name->getString());
+      if(active->getNewVal()){
+        Serial.printf("Head '%s' valve is opening\n",name->getString());
+        inUse->setVal(1);
+        remainingDuration->setVal(setDuration->getVal());
+      } else {
+        Serial.printf("Head '%s' valve is closing\n",name->getString());
+        inUse->setVal(0);
+        remainingDuration->setVal(0);
+      }
     }
     
     return(true);
@@ -77,36 +86,56 @@ struct Sprayer : Service::Valve {
 
 };
 
-struct Shower : Service::Faucet {
+struct Sprinkler : Service::IrrigationSystem {
 
   SpanCharacteristic *active=new Characteristic::Active(0);
-  
+  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(30);
+  SpanCharacteristic *inUse=new Characteristic::InUse(0);
+  SpanCharacteristic *programMode=new Characteristic::ProgramMode(2);
+
   boolean update() override {
-    if(active->getNewVal())
-      Serial.printf("Shower is turning ON\n");
-    else
-      Serial.printf("Shower is turning OFF\n");
+
+    if(active->updated()){
+      Serial.printf("Sprinkler Active=%d\n",active->getNewVal());
+    }
 
     return(true);
   }
-
-  void loop() override {
-    for(auto s : linkedServices){
-      Sprayer *sprayer=(Sprayer *)s;
-      boolean shouldBeOn=active->getVal() && sprayer->enabled->getVal() && sprayer->active->getVal();
-      
-      if(shouldBeOn && !sprayer->inUse->getVal()){
-        Serial.printf("Sprayer '%s' is turning ON\n",sprayer->name->getString());
-        sprayer->inUse->setVal(1);
-      } else
-      
-      if(!shouldBeOn && sprayer->inUse->getVal()){
-        Serial.printf("Sprayer '%s' is turning OFF\n",sprayer->name->getString());
-        sprayer->inUse->setVal(0);
-      }
-      
-    }
     
+  void loop() override {
+    int nHeadsInUse=0;
+    int nHeadsActive=0;
+    
+    for(auto s : linkedServices){
+      Head *head=(Head *)s;
+      nHeadsInUse+=head->inUse->getVal();
+      nHeadsActive+=head->active->getVal();
+//      Serial.printf("%d %d %d\n",nHeadsInUse,nHeadsActive,active->getVal());
+//      delay(1000);
+    }
+
+//    if(nHeadsActive && !active->getVal()){
+//      Serial.printf("Sprinkler is ACTIVE\n");
+//      active->setVal(1);
+//    } else 
+//    
+//    if(!nHeadsActive && active->getVal()){
+//      Serial.printf("Sprinkler is NOT ACTIVE \n");
+//      active->setVal(0);
+//    }
+    
+    if(nHeadsInUse && !inUse->getVal()){
+    Serial.printf("Sprinkler is IN USE\n");
+      inUse->setVal(1);
+      remainingDuration->setVal(30);
+    } else 
+    
+    if(!nHeadsInUse && inUse->getVal()){
+      Serial.printf("Sprinkler is NOT IN USE \n");
+      inUse->setVal(0);
+      remainingDuration->setVal(0);
+    }
+
   }
    
 };
@@ -117,12 +146,12 @@ void setup() {
 
   Serial.begin(115200);
   
-  homeSpan.begin(Category::ShowerSystems,"HomeSpan Shower");
+  homeSpan.begin(Category::Sprinklers,"HomeSpan Sprinklers");
 
   new SpanAccessory();                                  
 
     new Service::AccessoryInformation();
-      new Characteristic::Name("Spa Shower");                   
+      new Characteristic::Name("Sprinkler System");                   
       new Characteristic::Manufacturer("HomeSpan");             
       new Characteristic::SerialNumber("HSL-123");              
       new Characteristic::Model("HSL Test");                    
@@ -132,11 +161,11 @@ void setup() {
     new Service::HAPProtocolInformation();
       new Characteristic::Version("1.1.0");                     
      
-    (new Shower())
-      ->addLink(new Sprayer("Rain Sprayer"))
-      ->addLink(new Sprayer("Hand Sprayer"))
-      ->addLink(new Sprayer("Jet 1"))
-      ->addLink(new Sprayer("Jet 2"))
+    (new Sprinkler())
+      ->addLink(new Head("Head 1"))
+      ->addLink(new Head("Head 2"))
+      ->addLink(new Head("Head 3"))
+      ->addLink(new Head("Head 4"))
       ;
 
 } // end of setup()
