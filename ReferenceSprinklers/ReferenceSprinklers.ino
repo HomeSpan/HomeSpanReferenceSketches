@@ -85,11 +85,19 @@ struct Head : Service::Valve {
   }
 
   void loop() override {
-    if(active->getVal() && (active->timeVal() > setDuration->getVal()*1000)){
-      Serial.printf("Head '%s' is closing (%d-second timer is complete)\n",name->getString(),setDuration->getVal());
-      active->setVal(0);
-      inUse->setVal(0);
-      remainingDuration->setVal(0);
+    if(active->getVal()){
+      int remainingTime=setDuration->getVal()-active->timeVal()/1000;
+         
+      if(remainingTime==0){
+        Serial.printf("Head '%s' is closing (%d-second timer is complete)\n",name->getString(),setDuration->getVal());
+        active->setVal(0);
+        inUse->setVal(0);
+        remainingDuration->setVal(0);
+      } else
+
+      if(remainingTime<remainingDuration->getVal()){
+        remainingDuration->setVal(remainingTime,false);
+      }
     }
   }
 
