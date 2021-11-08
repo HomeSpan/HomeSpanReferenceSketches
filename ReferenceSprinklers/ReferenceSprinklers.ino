@@ -44,7 +44,7 @@ struct Head : Service::Valve {
   SpanCharacteristic *inUse=new Characteristic::InUse(0);
   SpanCharacteristic *enabled = new Characteristic::IsConfigured(1);
   SpanCharacteristic *setDuration = new Characteristic::SetDuration(30);
-  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(0);
+  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(30);
   SpanCharacteristic *name;
 
   Head(const char *headName) : Service::Valve() {
