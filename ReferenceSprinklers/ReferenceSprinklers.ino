@@ -44,7 +44,7 @@ struct Head : Service::Valve {
   SpanCharacteristic *inUse=new Characteristic::InUse(0);
   SpanCharacteristic *enabled = new Characteristic::IsConfigured(1);
   SpanCharacteristic *setDuration = new Characteristic::SetDuration(30);
-  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(30);
+  SpanCharacteristic *remainingDuration = new Characteristic::RemainingDuration(0);
   SpanCharacteristic *name;
 
   Head(const char *headName) : Service::Valve() {
@@ -88,7 +88,7 @@ struct Head : Service::Valve {
     if(active->getVal()){
       int remainingTime=setDuration->getVal()-active->timeVal()/1000;
          
-      if(remainingTime==0){
+      if(remainingTime<=0){
         Serial.printf("Head '%s' is closing (%d-second timer is complete)\n",name->getString(),setDuration->getVal());
         active->setVal(0);
         inUse->setVal(0);
