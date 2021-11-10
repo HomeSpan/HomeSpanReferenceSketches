@@ -50,7 +50,7 @@ struct Head : Service::Valve {
   Head(const char *headName) : Service::Valve() {
     new Characteristic::ValveType(1);
     name=new Characteristic::ConfiguredName(headName);
-    enabled->perms|=PW;
+    enabled->addPerms(PW);
   }
 
   boolean update() override {

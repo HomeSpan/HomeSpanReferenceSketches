@@ -48,7 +48,7 @@ struct Sprayer : Service::Valve {
   Sprayer(const char *sprayerName) : Service::Valve() {
     new Characteristic::ValveType(2);
     name=new Characteristic::ConfiguredName(sprayerName);
-    enabled->perms|=PW;
+    enabled->addPerms(PW);
   }
 
   boolean update() override {
@@ -91,7 +91,7 @@ struct Shower : Service::Faucet {
   }
 
   void loop() override {
-    for(auto s : linkedServices){
+    for(auto s : getLinks()){
       Sprayer *sprayer=(Sprayer *)s;
       boolean shouldBeOn=active->getVal() && sprayer->enabled->getVal() && sprayer->active->getVal();
       
