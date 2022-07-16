@@ -119,18 +119,9 @@ void setup() {
   homeSpan.begin(Category::Sprinklers,"HomeSpan Sprinklers");
 
   new SpanAccessory();                                  
-
-    new Service::AccessoryInformation();
-      new Characteristic::Name("Sprinkler System");                   
-      new Characteristic::Manufacturer("HomeSpan");             
-      new Characteristic::SerialNumber("HSL-123");              
-      new Characteristic::Model("HSL Test");                    
-      new Characteristic::FirmwareRevision(HOMESPAN_VERSION);   
+    new Service::AccessoryInformation();  
       new Characteristic::Identify();                           
-  
-    new Service::HAPProtocolInformation();
-      new Characteristic::Version("1.1.0");                     
-     
+                   
     (new Sprinkler())
       ->addLink(new Head("Head 1"))
       ->addLink(new Head("Head 2"))
