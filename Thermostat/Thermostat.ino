@@ -27,6 +27,9 @@
 
 #include "HomeSpan.h"
 
+#define MIN_TEMP  0         // minimum allowed temperature in celsius
+#define MAX_TEMP  40        // maximum allowed temperature in celsius
+
 ///////////////////////////////
 
 struct HS_Thermostat : Service::Thermostat {
@@ -45,6 +48,11 @@ struct HS_Thermostat : Service::Thermostat {
  
   HS_Thermostat() : Service::Thermostat() {
     Serial.printf("\n*** Creating HomeSpan Thermostat***\n");
+
+    currentTemp.setRange(MIN_TEMP,MAX_TEMP);                                  // set all ranges the same to make sure Home App displays them correctly on the same dial
+    targetTemp.setRange(MIN_TEMP,MAX_TEMP);
+    heatingThreshold.setRange(MIN_TEMP,MAX_TEMP);
+    coolingThreshold.setRange(MIN_TEMP,MAX_TEMP);
     
     new SpanUserCommand('t',"<temp> - set the temperature, where temp is in F or C depending on configuration", setTemp, this);    
   }
