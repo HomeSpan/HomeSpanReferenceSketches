@@ -45,6 +45,8 @@ struct HS_Thermostat : Service::Thermostat {
  
   HS_Thermostat() : Service::Thermostat() {
     Serial.printf("\n*** Creating HomeSpan Thermostat***\n");
+    
+    new SpanUserCommand('t',"<temp> - set the temperature, where temp is in F or C depending on configuration", setTemp, this);    
   }
 
   boolean update() override {
@@ -151,6 +153,24 @@ struct HS_Thermostat : Service::Thermostat {
           break;
       }
   }
+
+  static void setTemp(const char *buf, void *arg){
+    HS_Thermostat *thermostat=(HS_Thermostat *)arg;
+
+    float temp=atof(buf+1);
+    float tempC=temp;
+    
+    if(thermostat->displayUnits.getVal())
+      tempC=(temp-32.0)/1.8;
+    if(tempC<10.0 || tempC>38.0){
+      Serial.printf("usage: @t <temp>, where temp is in range of 10C (50F) through 38C (100F)\n\n");
+      return;
+    }
+
+    Serial.printf("Current temperature is now %.1f %c\n",temp,thermostat->displayUnits.getVal()?'F':'C');
+    thermostat->currentTemp.setVal(tempC);
+  }
+  
 };
       
 ///////////////////////////////
