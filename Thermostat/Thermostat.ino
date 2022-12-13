@@ -25,14 +25,39 @@
  *  
  ********************************************************************************/
 
+///////////////////////////////////////////////////////
+//                                                   //
+//   HomeSpan Reference Sketch: Thermostat Service   //
+//                                                   //
+///////////////////////////////////////////////////////
+
 #include "HomeSpan.h"
 
 #define MIN_TEMP  0         // minimum allowed temperature in celsius
 #define MAX_TEMP  40        // maximum allowed temperature in celsius
 
-///////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
-struct HS_Thermostat : Service::Thermostat {
+// Here we create a dummmy temperature sensor that can be used as a real sensor in the Thermostat Service below.
+// Rather than read a real temperature sensor, this structure allows you to change the current temperature via the Serial Monitor
+
+struct DummyTempSensor {
+  static float temp;
+  
+  DummyTempSensor(float t) {
+    temp=t;
+    new SpanUserCommand('f',"<temp> - set the temperature, where temp is in degrees F", [](const char *buf){temp=(atof(buf+1)-32.0)/1.8;});
+    new SpanUserCommand('c',"<temp> - set the temperature, where temp is in degrees C", [](const char *buf){temp=atof(buf+1);});
+  }
+
+  float read() {return(temp);}
+};
+
+float DummyTempSensor::temp;
+
+////////////////////////////////////////////////////////////////////////
+
+struct Reference_Thermostat : Service::Thermostat {
 
   // Create characteristics, set initial values, and set storage in NVS to true
 
@@ -45,16 +70,16 @@ struct HS_Thermostat : Service::Thermostat {
   Characteristic::HeatingThresholdTemperature heatingThreshold{22,true};
   Characteristic::CoolingThresholdTemperature coolingThreshold{22,true};  
   Characteristic::TemperatureDisplayUnits displayUnits{0,true};               // this is for changing the display on the actual thermostat (if any), NOT in the Home App
+
+  DummyTempSensor tempSensor{22};                                             // instantiate a dummy temperature sensor with initial temp=22 degrees C
  
-  HS_Thermostat() : Service::Thermostat() {
+  Reference_Thermostat() : Service::Thermostat() {
     Serial.printf("\n*** Creating HomeSpan Thermostat***\n");
 
     currentTemp.setRange(MIN_TEMP,MAX_TEMP);                                  // set all ranges the same to make sure Home App displays them correctly on the same dial
     targetTemp.setRange(MIN_TEMP,MAX_TEMP);
     heatingThreshold.setRange(MIN_TEMP,MAX_TEMP);
-    coolingThreshold.setRange(MIN_TEMP,MAX_TEMP);
-    
-    new SpanUserCommand('t',"<temp> - set the temperature, where temp is in F or C depending on configuration", setTemp, this);    
+    coolingThreshold.setRange(MIN_TEMP,MAX_TEMP);    
   }
 
   boolean update() override {
@@ -91,16 +116,21 @@ struct HS_Thermostat : Service::Thermostat {
     return(true);
   }
 
-
-  // This optional function makes it easy to display temperatures on the serial monitor in either F or C depending on TemperatureDisplayUnits
-  
-  String temp2String(float temp){
-    String t = displayUnits.getVal()?String(round(temp*1.8+32.0)):String(temp);
-    t+=displayUnits.getVal()?" F":" C";
-    return(t);    
-  }
+  // Here's where all the main logic exists to turn on/off heating/cooling by comparing the current temperature to the Thermostat's settings
 
   void loop() override {
+
+      float temp=tempSensor.read();       // read temperature sensor (which in this example is just a dummy sensor)
+      
+      if(temp<MIN_TEMP)                   // limit value to stay between MIN_TEMP and MAX_TEMP
+        temp=MIN_TEMP;
+      if(temp>MAX_TEMP)
+        temp=MAX_TEMP;
+
+      if(currentTemp.timeVal()>5000 && fabs(currentTemp.getVal<float>()-temp)>0.25){      // if it's been more than 5 seconds since last update, and temperature has changed
+        currentTemp.setVal(temp);                                                       
+        Serial.printf("Current Temperature is now %s.\n",temp2String(currentTemp.getNewVal<float>()).c_str());
+      } 
 
       switch(targetState.getVal()){
         
@@ -162,26 +192,17 @@ struct HS_Thermostat : Service::Thermostat {
       }
   }
 
-  static void setTemp(const char *buf, void *arg){
-    HS_Thermostat *thermostat=(HS_Thermostat *)arg;
-
-    float temp=atof(buf+1);
-    float tempC=temp;
-    
-    if(thermostat->displayUnits.getVal())
-      tempC=(temp-32.0)/1.8;
-    if(tempC<10.0 || tempC>38.0){
-      Serial.printf("usage: @t <temp>, where temp is in range of 10C (50F) through 38C (100F)\n\n");
-      return;
-    }
-
-    Serial.printf("Current temperature is now %.1f %c\n",temp,thermostat->displayUnits.getVal()?'F':'C');
-    thermostat->currentTemp.setVal(tempC);
-  }
+  // This "helper" function makes it easy to display temperatures on the serial monitor in either F or C depending on TemperatureDisplayUnits
   
+  String temp2String(float temp){
+    String t = displayUnits.getVal()?String(round(temp*1.8+32.0)):String(temp);
+    t+=displayUnits.getVal()?" F":" C";
+    return(t);    
+  }  
+
 };
-      
-///////////////////////////////
+
+////////////////////////////////////////////////////////////////////////
 
 void setup() {
   
@@ -193,11 +214,10 @@ void setup() {
     new Service::AccessoryInformation();
       new Characteristic::Identify();
 
-    new HS_Thermostat();
-      
+    new Reference_Thermostat();    
 }
 
-///////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 void loop() {
   homeSpan.poll();
