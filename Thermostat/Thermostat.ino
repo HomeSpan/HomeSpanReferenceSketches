@@ -135,9 +135,10 @@ struct Reference_Thermostat : Service::Thermostat {
       switch(targetState.getVal()){
         
         case 0:
-          if(currentState.getVal()!=0)
+          if(currentState.getVal()!=0){
             Serial.printf("Thermostat OFF\n");
             currentState.setVal(0);
+          }
           break;
           
         case 1:
