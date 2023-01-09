@@ -1,7 +1,7 @@
 /*********************************************************************************
  *  MIT License
  *  
- *  Copyright (c) 2021 Gregg E. Berman
+ *  Copyright (c) 2023 Gregg E. Berman
  *  
  *  https://github.com/HomeSpan/HomeSpan
  *  
@@ -26,15 +26,11 @@
  ********************************************************************************/
 
  
-  ////////////////////////////////////////////////////////
-  //                                                    //
-  //    HomeSpan Reference SPRINKLERS Sketch:           //
-  //                                                    //
-  //    * IRRIGATION Service                            //
-  //    * Multiple linked VALVE Services                //
-  //                                                    //  
-  ////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////
+//                                                   //
+//   HomeSpan Reference Sketch: Irrigation Service   //
+//                                                   //
+///////////////////////////////////////////////////////
  
 #include "HomeSpan.h" 
 
@@ -49,8 +45,8 @@ struct Head : Service::Valve {
 
   Head(const char *headName) : Service::Valve() {
     new Characteristic::ValveType(1);
-    name=new Characteristic::ConfiguredName(headName,true);
-    enabled->addPerms(PW);
+    name=new Characteristic::ConfiguredName(headName,true);     // This Characteristic was introduced for TV Services, but works well here
+    enabled->addPerms(PW);                                      // Adding "PW" to the IsConfigured Characteristic allws for enabling/disabling valves
   }
 
   boolean update() override {
@@ -96,6 +92,10 @@ struct Head : Service::Valve {
       }
     }
 
+    // Below we simulate valves that take 5 seconds to open/close so that In Use follows Active by 5 seconds
+    // The Home App will accurately reflect this intermediate state and show "Waiting..." when a value of initially
+    // activated
+    
     if(active->timeVal()>5000 && active->getVal()!=inUse->getVal()){
       inUse->setVal(active->getVal());
       Serial.printf("%s value is %s\n",name->getString(),inUse->getVal()?"OPEN":"CLOSED");
@@ -104,13 +104,22 @@ struct Head : Service::Valve {
 
 };
 
+////////////////////////////////////////////////////////////////////////
+
 struct Sprinkler : Service::IrrigationSystem {
 
-  SpanCharacteristic *active=new Characteristic::Active(0);             // Home App seems to require this Characteristic, and setting to zero seems fine.
-  SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);  
+  SpanCharacteristic *active=new Characteristic::Active(0);             // HomeKit requires this Characteristic, but it has no effect in Home App
+  SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);   // HomeKit requires this Characteristic, but it is mostly for information purposeses only in the Home App
+
+  // NOTE: According to HAP-R2, the In Use Characteristic is also required for the Irrigation System Service.
+  // However, adding this Characteristic seems to break the Home App.  Seems that the HAP-R2 spec is out of date
+  // and that the Home App determines whether the Irrigation System is In Use simply by noting that one or more
+  // linked Valves are In Use.
+  //
+  // Recommendation: Do NOT instatiate Characteristic::InUse for the Irrigation Service
 };
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 void setup() {
 
@@ -131,7 +140,7 @@ void setup() {
 
 } // end of setup()
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 void loop(){
   
