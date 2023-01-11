@@ -32,7 +32,27 @@
 //                                                   //
 ///////////////////////////////////////////////////////
  
-#include "HomeSpan.h" 
+#include "HomeSpan.h"
+
+struct Sprinkler *sprinklerSystem;      // create global pointer to an instance of Sprinkler so we can reference it inside SpanUserCommand later on
+
+////////////////////////////////////////////////////////////////////////
+
+struct Sprinkler : Service::IrrigationSystem {
+
+  SpanCharacteristic *active=new Characteristic::Active(0);             // HomeKit requires this Characteristic, but it has no effect in Home App
+  SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);   // HomeKit requires this Characteristic, but it is mostly for information purposeses only in the Home App
+
+  // NOTE: According to HAP-R2, the In Use Characteristic is also required for the Irrigation System Service.
+  // However, adding this Characteristic seems to break the Home App.  Seems that the HAP-R2 spec is out of date
+  // and that the Home App determines whether the Irrigation System is In Use simply by noting that one or more
+  // linked Valves are In Use.
+  //
+  // Recommendation: Do NOT instatiate Characteristic::InUse for the Irrigation Service
+
+};
+
+////////////////////////////////////////////////////////////////////////
 
 struct Head : Service::Valve {
 
@@ -46,7 +66,7 @@ struct Head : Service::Valve {
   Head(const char *headName) : Service::Valve() {
     new Characteristic::ValveType(1);
     name=new Characteristic::ConfiguredName(headName,true);     // This Characteristic was introduced for TV Services, but works well here
-    enabled->addPerms(PW);                                      // Adding "PW" to the IsConfigured Characteristic allws for enabling/disabling valves
+    enabled->addPerms(PW);                                      // Adding "PW" to the IsConfigured Characteristic allows for enabling/disabling valves
   }
 
   boolean update() override {
@@ -106,21 +126,6 @@ struct Head : Service::Valve {
 
 ////////////////////////////////////////////////////////////////////////
 
-struct Sprinkler : Service::IrrigationSystem {
-
-  SpanCharacteristic *active=new Characteristic::Active(0);             // HomeKit requires this Characteristic, but it has no effect in Home App
-  SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);   // HomeKit requires this Characteristic, but it is mostly for information purposeses only in the Home App
-
-  // NOTE: According to HAP-R2, the In Use Characteristic is also required for the Irrigation System Service.
-  // However, adding this Characteristic seems to break the Home App.  Seems that the HAP-R2 spec is out of date
-  // and that the Home App determines whether the Irrigation System is In Use simply by noting that one or more
-  // linked Valves are In Use.
-  //
-  // Recommendation: Do NOT instatiate Characteristic::InUse for the Irrigation Service
-};
-
-////////////////////////////////////////////////////////////////////////
-
 void setup() {
 
   Serial.begin(115200);
@@ -131,12 +136,16 @@ void setup() {
     new Service::AccessoryInformation();  
       new Characteristic::Identify();                           
                    
-    (new Sprinkler())
-      ->addLink(new Head("Head 1"))
-      ->addLink(new Head("Head 2"))
-      ->addLink(new Head("Head 3"))
-      ->addLink(new Head("Head 4"))
-      ;
+    sprinklerSystem = new Sprinkler();
+    sprinklerSystem->addLink(new Head("Head 1"))
+                  ->addLink(new Head("Head 2"))
+                  ->addLink(new Head("Head 3"))
+                  ->addLink(new Head("Head 4"))
+                  ;
+
+  // This allows user to toggle programMode on/off from Serial Monitor, though this sketch does not contain any actual scheduled programs:
+  
+  new SpanUserCommand('p', "- starts/stops scheduled program",[](const char *buf){sprinklerSystem->programMode->setVal(!sprinklerSystem->programMode->getVal());});  
 
 } // end of setup()
 
