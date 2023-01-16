@@ -2,7 +2,7 @@
 
 Comprehensive *Reference Sketches* showcasing some of the more complex HomeKit Services.  Built using the **[HomeSpan HomeKit Library](https://github.com/HomeSpan/HomeSpan)**, these sketches are designed to run on ESP32 devices under the Arduino IDE.  See [HomeSpan](https://github.com/HomeSpan/HomeSpan) for details.
 
-This reposity includes Reference Sketches for the following HomeKit Services.  
+The following References Sketches have been tested under **iOS 16.2** (see note 2 below):  
 
 * **[Thermostat](Thermostat/Thermostat.ino)**
   * Implements a complete Homekit Thermostat providing heating/cooling/auto/off modes
@@ -30,5 +30,5 @@ This reposity includes Reference Sketches for the following HomeKit Services.
 
 1. These sketches are designed to demonstrate how various HomeKit Services work in practice with the Home App.  They do not include code that interfaces with actual hardware, such as a furnace, water valve, etc.  Instead, the code outputs messages to the Serial Monitoring reporting when a "simulated" activity occurs (such as a valve being turned on).  To interface with real-world applicances you will need to add your own code in the appropriate sections of each sketch.
 
-1. Apple frequently changes the Home App interface and underlying HomeKit architecture as it releases new version of its operating system.  This sometimes causes specific functions to change the way they operate, how they are displayed, and even whether or not they continue to function at all.  As a result, aspects of the sketches above may, or may not, work as expected in future releases of Apple iOS.  Apple presumably informs manufactures of HomeKit products with commercial licenses of these changes, but Apple has not updated it's non-commercial HAP documentation (which is used by HomeSpan) since 2019 and some Characteristics listed in this documentation no longer function as indicated.  As a result, the only way to ensure sketches continue to work is by testing and experimentation as Apple releases new version of iOS.
+1. Apple frequently changes the Home App interface and underlying HomeKit architecture as it releases new versions of its operating system.  This sometimes causes specific functions to change the way they operate, how they are displayed, and even whether or not they continue to function at all.  As a result, aspects of the sketches above may, or may not, work as expected in future releases of Apple iOS.  Apple presumably informs manufactures of HomeKit products with commercial licenses of these changes, but Apple has not updated its non-commercial HAP documentation (which is used by HomeSpan) since version 2 was published in 2019.  It is already apparent that some Characteristics listed in the HAP-R2 documentation no longer function as indicated.  As a result, the only way to ensure sketches continue to work is by testing and experimentation whenever Apple releases new version of iOS.
 
