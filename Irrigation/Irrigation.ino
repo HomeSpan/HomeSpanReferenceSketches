@@ -35,7 +35,7 @@
 #include "HomeSpan.h"
 
 #define  HEAD_DURATION    20       // default duration, in seconds, for each Head to stay open (can be configured for each Head in Home App)
-#define  HEAD_SPEED       5000      // the time, in milliseconds, it takes for valve to open/close and water to fully flow or stop flowing
+#define  HEAD_SPEED       5000     // the time, in milliseconds, it takes for valve to open/close and water to fully flow or stop flowing
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ struct Head : Service::Valve {
   SpanCharacteristic *name;
 
   Head(const char *headName) : Service::Valve() {
-    new Characteristic::ValveType(1);                           // Ser Valve Type = Irrigation
+    new Characteristic::ValveType(1);                           // Set Valve Type = Irrigation
     name=new Characteristic::ConfiguredName(headName,true);     // This Characteristic was introduced for TV Services, but works well here
     enabled->addPerms(PW);                                      // Adding "PW" to the IsConfigured Characteristic allows for enabling/disabling valves
   }
@@ -212,19 +212,12 @@ void setup() {
       new Characteristic::Identify();                           
                    
     new Sprinkler(4);       // create Sprinkler with 4 Heads
-
-  // This allows user to toggle programMode on/off from Serial Monitor.  In practice this would be done using a button on the device or via a device-based display
-  
-//  new SpanUserCommand('p', "- starts/stops scheduled program",[](const char *buf){sprinkler->runProgram=!sprinkler->runProgram;});  
-
-} // end of setup()
+}
 
 ////////////////////////////////////////////////////////////////////////
 
-void loop(){
-  
-  homeSpan.poll();
-  
-} // end of loop()
+void loop(){ 
+  homeSpan.poll();  
+}
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 /*********************************************************************************
  *  MIT License
  *  
- *  Copyright (c) 2021 Gregg E. Berman
+ *  Copyright (c) 2023 Gregg E. Berman
  *  
  *  https://github.com/HomeSpan/HomeSpan
  *  
@@ -26,29 +26,27 @@
  ********************************************************************************/
 
  
-  ////////////////////////////////////////////////////////
-  //                                                    //
-  //    HomeSpan Reference SHOWER Sketch:               //
-  //                                                    //
-  //    * FAUCET Service                                //
-  //    * Multiple linked VALVE Services                //
-  //                                                    //  
-  ////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
+//                                                   //
+//   HomeSpan Reference Sketch: Faucet Service       //
+//                                                   //
+///////////////////////////////////////////////////////
 
- 
 #include "HomeSpan.h" 
+
+////////////////////////////////////////////////////////////////////////
 
 struct Sprayer : Service::Valve {
 
   SpanCharacteristic *active=new Characteristic::Active(0);
   SpanCharacteristic *inUse=new Characteristic::InUse(0);
-  SpanCharacteristic *enabled = new Characteristic::IsConfigured(1);
+  SpanCharacteristic *enabled = new Characteristic::IsConfigured(1,true);
   SpanCharacteristic *name;
 
   Sprayer(const char *sprayerName) : Service::Valve() {
-    new Characteristic::ValveType(2);
-    name=new Characteristic::ConfiguredName(sprayerName);
-    enabled->addPerms(PW);
+    new Characteristic::ValveType(2);                               // Set Valve Type = Shower Head
+    name=new Characteristic::ConfiguredName(sprayerName,true);      // This Characteristic was introduced for TV Services, but works well here
+    enabled->addPerms(PW);                                          // Adding "PW" to the IsConfigured Characteristic allows for enabling/disabling valves
   }
 
   boolean update() override {
@@ -76,6 +74,8 @@ struct Sprayer : Service::Valve {
   }
 
 };
+
+////////////////////////////////////////////////////////////////////////
 
 struct Shower : Service::Faucet {
 
@@ -111,27 +111,18 @@ struct Shower : Service::Faucet {
    
 };
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 void setup() {
 
   Serial.begin(115200);
   
-  homeSpan.begin(Category::ShowerSystems,"HomeSpan Shower");
+  homeSpan.begin(Category::ShowerSystems,"HomeSpan Faucet");
 
   new SpanAccessory();                                  
-
     new Service::AccessoryInformation();
-      new Characteristic::Name("Spa Shower");                   
-      new Characteristic::Manufacturer("HomeSpan");             
-      new Characteristic::SerialNumber("HSL-123");              
-      new Characteristic::Model("HSL Test");                    
-      new Characteristic::FirmwareRevision(HOMESPAN_VERSION);   
       new Characteristic::Identify();                           
-  
-    new Service::HAPProtocolInformation();
-      new Characteristic::Version("1.1.0");                     
-     
+       
     (new Shower())
       ->addLink(new Sprayer("Rain Sprayer"))
       ->addLink(new Sprayer("Hand Sprayer"))
@@ -141,12 +132,10 @@ void setup() {
 
 } // end of setup()
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
-void loop(){
-  
-  homeSpan.poll();
-  
-} // end of loop()
+void loop(){  
+  homeSpan.poll(); 
+}
 
-//////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
