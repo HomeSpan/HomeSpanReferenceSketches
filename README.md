@@ -4,7 +4,7 @@ Comprehensive *Reference Sketches* showcasing some of the more complex HomeKit S
 
 This reposity includes Reference Sketches for the following HomeKit Services.  
 
-* **Thermostat**
+* **[Thermostat](Thermostat/Thermostat.ino)**
   * Implements a complete Homekit Thermostat providing heating/cooling/auto/off modes
   * Includes a "simulated" temperature sensor allowing you to change the *current* temperature via the Serial Monitor to observe how the Thermostat responds in different modes
   * Includes stub code for monitoring and setting relative humidity
