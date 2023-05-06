@@ -45,15 +45,15 @@
 
 // In addition, by connecting the USB voltage pin on the ESP32 to digital pin 21 through a voltage divider
 // consisting of two 10K ohm resistors, it is possible to determine whether or not the ESP is plugged
-// into USB power using digitalRead(21).  This can be used to determine whether or not the battery is
+// into USB power by calling digitalRead(21).  This can be used to determine whether or not the battery is
 // being charged.
 
-// The class below supports two methods:
+// The class supports the following two methods:
 //
 //  * int getPercentCharged() - returns 0-100
 //  * int getChargingState() - returns 1 if ESP32 is plugged into USB power, else returns 0
 
-// Note: battery voltage is automatically checked by this class in a background tasks that runs every 5 seconds.
+// Note: battery voltage is automatically checked by this class in a background task that runs every second.
 
 class BATTERY {
   
@@ -61,7 +61,7 @@ class BATTERY {
   int usbPin;             // pin to use for a digital read of USB Voltage
   int minReading;         // min expected analog value of Battery Voltage (corresponding to 0% charged)
   int maxReading;         // max expected analog value of Battery Voltage (corresponding to 100% charged)
-  int analogReading;      // analog reading of the Battery Voltage
+  float analogReading;    // analog reading of the Battery Voltage
 
   public:
 
@@ -70,11 +70,15 @@ class BATTERY {
     this->usbPin=usbPin;
     this->minReading=minReading;
     this->maxReading=maxReading;
+    analogReading=maxReading;
         
-    pinMode(usbPin,INPUT_PULLDOWN);
-    xTaskCreateUniversal(batteryUpdate, "batteryTaskHandle", 4096, this, 1, NULL, 0);
+    pinMode(usbPin,INPUT_PULLDOWN);     // set usbPin to input mode
+    
+    xTaskCreateUniversal(batteryUpdate, "batteryTaskHandle", 4096, this, 1, NULL, 0);   // start background task to measure analogRead(35)
   }
 
+  // returns percent charged from 0-100
+  
   int getPercentCharged(){
     int percentCharged=100.0*(analogReading-minReading)/(maxReading-minReading);
 
@@ -86,18 +90,20 @@ class BATTERY {
     return(percentCharged);
   }
 
+  // returns 1 if USB is powered, else 0
+
   int getChargingState(){
     return(digitalRead(usbPin));
   }
 
+  // background task that measures voltage of battery
+  
   static void batteryUpdate(void *args){
     BATTERY *b = (BATTERY*)args;
     for(;;){
-      int val=0;
-      for(int i=0;i<5;i++)
-        val+=analogRead(b->batteryPin);
-      b->analogReading=val/5;
-      delay(5000);
+      b->analogReading*=0.9;
+      b->analogReading+=0.1*analogRead(b->batteryPin);      // use exponential smoothing
+      delay(1000);
     }
   }
   
