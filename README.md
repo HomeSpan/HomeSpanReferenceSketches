@@ -24,7 +24,10 @@ The following References Sketches have been tested under **iOS 16.2** (see note 
   * Allows you to enable/disable and rename each Sprinkler Head from within the Home App
   * Includes the ability to run a "scheduled program" (which you start/stop via the Serial Monitor) causing each *enabled* Head to sequentially open/close  based on its specific duration time.  The schedule briefly pauses when switching from one Head to another to account for the Head Speed (in a real system this helps avoid sudden pressure drops)
   * Note: the Home App drop-down menu for selecting the duration time of each Sprinkler Head includes only a fixed number of choices determined by Apple (with the minimum time being 5 minutes).  The Eve for HomeKit App provides for more granular choices.  You can also set the duration time directly in the sketch using any number of seconds, from 1 to 3600, even if those times do not match an "allowed" choice shown in the Home App.  For illustration purposes the sketch is configured to initialize the Head Duration time for each value to be 20 seconds
-  
+
+* **[Battery Check](BatteryCheck/BatteryCheck.ino)**
+  * Implements a simple on/off LED with a Battery Service to check battery level, charging status, and low-battery warning
+  * Includes a stand-alone class to measure LiPo battery voltage and charging status when using an [Adafruit Huzzah32 Feather Board](https://www.adafruit.com/product/3405)
   
 ### End Notes
 
