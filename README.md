@@ -2,7 +2,7 @@
 
 Comprehensive *Reference Sketches* showcasing some of the more complex HomeKit Services.  Built using the **[HomeSpan HomeKit Library](https://github.com/HomeSpan/HomeSpan)**, these sketches are designed to run on ESP32 devices under the Arduino IDE.  See [HomeSpan](https://github.com/HomeSpan/HomeSpan) for details.
 
-The following References Sketches have been tested under **iOS 16.2** (see note 2 below):  
+The following References Sketches have been tested under **iOS 16.5** (see note 2 below):  
 
 * **[Thermostat](Thermostat/Thermostat.ino)**
   * Implements a complete Homekit Thermostat providing heating/cooling/auto/off modes
@@ -28,6 +28,12 @@ The following References Sketches have been tested under **iOS 16.2** (see note 
 * **[Battery Check](BatteryCheck/BatteryCheck.ino)**
   * Implements a simple on/off LED with a Battery Service to check battery level, charging status, and low-battery warning
   * Includes a stand-alone class to measure LiPo battery voltage and charging status when using an [Adafruit Huzzah32 Feather Board](https://www.adafruit.com/product/3405)
+
+* **[Humidifier/Dehumidifier](Humidifier-Dehumidifier/Humidifier-Dehumidifier.ino)**
+  * Implements a complete Homekit Humidifier/Dehumidifier providing humidify/dehumidify/auto/off modes
+  * Includes a "simulated" humidity sensor allowing you to change the *current* humidity via the Serial Monitor to observe how the Humidifier/Dehumidifier responds in different modes
+  * Includes stub code for optional water level, fan rotation speed, and swing modes
+  * Shows how to restrict allowed modes to Humidify-only or Dehumidify-only
   
 ### End Notes
 
