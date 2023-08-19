@@ -43,7 +43,7 @@ struct DummyHumiditySensor {
   
   DummyHumiditySensor(float rH) {
     relativeHumidity=rH;
-    new SpanUserCommand('f',"<humidity> - set the relative humidity in percent [0-100]", [](const char *buf){relativeHumidity=atof(buf+1);});
+    new SpanUserCommand('h',"<humidity> - set the relative humidity in percent [0-100]", [](const char *buf){relativeHumidity=atof(buf+1);});
   }
 
   float read() {return(relativeHumidity);}
@@ -65,6 +65,7 @@ struct Reference_HumidifierDehumidifier : Service::HumidifierDehumidifier {
   Characteristic::RelativeHumidityDehumidifierThreshold dehumidThreshold{80,true};
   Characteristic::SwingMode swing{0,true};
   Characteristic::WaterLevel water{50,true};
+  Characteristic::RotationSpeed fan{0,true};
 
   DummyHumiditySensor humiditySensor{70};                                             // instantiate a dummy humidity sensor with initial humidity=70%
  
@@ -84,6 +85,10 @@ struct Reference_HumidifierDehumidifier : Service::HumidifierDehumidifier {
 
     if(swing.updated()){
       Serial.printf("Humidifier/DeHumidifier Swing Mode is %s\n",swing.getNewVal()?"ON":"OFF");      
+    }    
+
+    if(fan.updated()){
+      Serial.printf("Humidifier/DeHumidifier Fan Speed set to %g\n",fan.getNewVal<float>());
     }    
 
     if(targetState.updated()){
