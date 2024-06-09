@@ -50,7 +50,7 @@ struct Head : Service::Valve {
 
   Head(const char *headName) : Service::Valve() {
     new Characteristic::ValveType(1);                           // Set Valve Type = Irrigation
-    name=new Characteristic::ConfiguredName(headName,true);     // This Characteristic was introduced for TV Services, but works well here
+    name=new Characteristic::ConfiguredName(headName,true);     
     enabled->addPerms(PW);                                      // Adding "PW" to the IsConfigured Characteristic allows for enabling/disabling valves
   }
 
