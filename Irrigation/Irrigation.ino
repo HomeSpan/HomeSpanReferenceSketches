@@ -117,10 +117,9 @@ struct Sprinkler : Service::IrrigationSystem {
   // not display a separate "master" control for the Irrigation Service, and will instead automatically determine whether
   // the system is Active according to whether one more values are Active.
 
-  // Also, because this configuration is based on LINKED Valves, DO NOT include Characteristic::InUse for the Irrigation Service
-
   SpanCharacteristic *programMode=new Characteristic::ProgramMode(0);   // HomeKit requires this Characteristic, but it is only for display purposes in the Home App
   SpanCharacteristic *active=new Characteristic::Active(0);             // though in this configuration the Home App will not display a "master" control, the Active Characteristic is still required
+  SpanCharacteristic *inUse=new Characteristic::InUse(0);               // though in this configuration the Home App will not display a "master" control, the InUse Characteristic is still required
   
   vector<Head *> heads;                                                 // OPTIONAL: vector to store list of linked Heads that will be used for running a scheduled program
   vector<Head *>::iterator currentHead;                                 // OPTIONAL: pointer to the current head in a scheduled program
