@@ -71,7 +71,7 @@ struct HomeSpanTV : Service::Television {
   Characteristic::PowerModeSelection settingsKey;          // adds "View TV Settings" option to Selection Screen  
   SpanCharacteristic *tvName;                              // name of TV
 
-  HomeSpanTV(char *name) : Service::Television() {
+  HomeSpanTV(const char *name) : Service::Television() {
     tvName = new Characteristic::ConfiguredName(name,true);
     Serial.printf("Creating Television Service '%s'\n",tvName->getString());  
   }
@@ -83,7 +83,11 @@ struct HomeSpanTV : Service::Television {
     }
 
     if(inputSource.updated()){
-      Serial.printf("Set Input Source to #%d \n",inputSource.getNewVal());        
+      for(int i=1;i<getLinks().size();i++){
+        TvInput *tvInput = (TvInput *)getLinks()[i];
+        if(inputSource.getNewVal()==tvInput->sourceID->getVal())
+          Serial.printf("Set to Input Source %d: %s\n",tvInput->sourceID->getVal(),tvInput->sourceName->getString());
+      }
     }
 
     if(settingsKey.updated()){
@@ -143,11 +147,13 @@ void setup() {
       new Characteristic::VolumeControlType(3);
 
     (new HomeSpanTV("Test TV"))                                  // define a Television Service with link in Input Sources and Speaker
+      ->addLink(speaker)
       ->addLink(new TvInput("HDMI-1"))
       ->addLink(new TvInput("HDMI-2"))
       ->addLink(new TvInput("HDMI-3"))
-      ->addLink(speaker);
-      
+      ->addLink(new TvInput("HDMI-4"))
+      ->addLink(new TvInput("HDMI-5"))
+      ;    
 }
 
 ///////////////////////////////
