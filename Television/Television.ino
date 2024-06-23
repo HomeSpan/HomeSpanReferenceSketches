@@ -33,6 +33,21 @@
 
 #include "HomeSpan.h"
 
+struct sourceData_t {
+  int ID;
+  const char *name;
+};
+
+#define   NUM_SOURCES     5
+
+sourceData_t sourceData[NUM_SOURCES]={
+  30,"HDMI-1",
+  40,"HDMI-2",
+  10,"Component-1",
+  25,"Component-2",
+  15,"DVI"
+};
+
 ////////////////////////////////////////////////////////////////////////
 ///// TvInput Service - used by Television Service further below ///////
 ////////////////////////////////////////////////////////////////////////
@@ -99,26 +114,25 @@ struct HomeSpanTV : Service::Television {
   Characteristic::PowerModeSelection settingsKey;          // adds "View TV Settings" option to Selection Screen
   
   SpanCharacteristic *tvName;                              // name of TV (will be instantiated in constructor below)
-
-  Characteristic::DisplayOrder displayOrder{"",true};      // this TLV8 characteristic is used to set the order in which the Input Sources are displayed in the Home App                         
-  vector<TvInput *> inputs;                                // vector of pointers to Input Sources used for creating displayOrder
+  SpanCharacteristic *displayOrder;
 
   HomeSpanTV(const char *name) : Service::Television() {
     tvName = new Characteristic::ConfiguredName(name,true);
-    Serial.printf("Creating Television Service '%s'\n",tvName->getString()); 
+    Serial.printf("Creating Television Service '%s'\n",tvName->getString());
 
-    addLink(new TvInput(30,"HDMI-1"));                     // add Input Sources (unique ID and default name)
-    addLink(new TvInput(40,"HDMI-2"));
-    addLink(new TvInput(10,"Component-1"));
-    addLink(new TvInput(20,"Component-2"));
-    addLink(new TvInput(50,"DVI"));
+    TLV8 orderTLV;                                         // create a temporary TLV8 object to store the order in which the Input Sources are to be displayed in the Home App
 
-    for(auto source : getLinks<TvInput *>())               // loop over all sources in getLines and add them to inputs vector             
-      inputs.push_back(source);
-      
-    addLink(new TvSpeaker());                              // add TV Speaker (do this AFTER creating inputs vector from getLinks above)
+    for(int i=0;i<NUM_SOURCES;i++){
+      orderTLV.add(1,sourceData[i].ID);
+      orderTLV.add(0);
+    }
 
-    updateDisplayOrder(inputs);
+    displayOrder = new Characteristic::DisplayOrder(&orderTLV,true);
+
+    addLink(new TvSpeaker());                              // add TV Speaker
+
+    for(int i=0;i<NUM_SOURCES;i++)
+      addLink(new TvInput(sourceData[i].ID,sourceData[i].name));  
   }
 
   boolean update() override {
@@ -128,17 +142,31 @@ struct HomeSpanTV : Service::Television {
     }
 
     if(inputSource.updated()){                                  // request for new Input Source
-      for(auto src : inputs)                                    // loop through all sources in inputs vector and find one with matching ID
+      for(auto src : getLinks<TvInput *>("InputSource"))        // loop through all linked TvInput Sources and find one with matching ID
         if(inputSource.getNewVal()==src->sourceID->getVal())
-          Serial.printf("Set to Input Source %d: %s\n",inputSource.getNewVal(),src->sourceName->getString());          
+          Serial.printf("Set to Input Source %d: %s\n",src->sourceID->getVal(),src->sourceName->getString());          
     }
 
     // for fun, use "View TV Settings" to trigger HomeSpan to re-order the Input Sources alphabetically
     
     if(settingsKey.updated()){
-      Serial.printf("Received request to \"View TV Settings\" --- alphabetizing Input Sources\n");      
+      Serial.printf("Received request to \"View TV Settings\"\n");
+      
+      // for fun, use "View TV Settings" to trigger HomeSpan to re-order the Input Sources alphabetically
+      
+      Serial.printf("Alphabetizing Input Sources...\n");
+      auto inputs = getLinks<TvInput *>("InputSource");         // create copy of linked Input Source vector so it can be sorted alphabetically
+                    
       std::sort(inputs.begin(),inputs.end(),[](TvInput *i, TvInput *j)->boolean{return(strcmp(i->sourceName->getString(),j->sourceName->getString())<0);});
-      updateDisplayOrder(inputs);
+
+      TLV8 orderTLV;                                            // create a temporary TLV8 object to store the order in which the Input Sources are to be displayed in the Home App
+
+      for(auto src : inputs){
+        orderTLV.add(1,src->sourceID->getVal());
+        orderTLV.add(0);
+      }
+
+    displayOrder->setTLV(orderTLV);                             // update displayOrder Characteristic with TLV8 record
     }
     
     if(remoteKey.updated()){
@@ -174,18 +202,6 @@ struct HomeSpanTV : Service::Television {
     }
 
     return(true);
-  }
-
-  void updateDisplayOrder(vector<TvInput *> & sources){    // this optional function updates the displayOrder Characteristic to reflect the order of the TvInputs in the specified "sources" vector
-
-    TLV8 orderTLV;                                         // create a temporary TLV8 object to store the order in which the Input Sources are to be displayed in the Home App
-
-    for(auto src : sources){                               // loop over all input sources
-      orderTLV.add(1,src->sourceID->getVal());             // add TLV8 record with TAG=1 and VALUE=ID of TvInput source
-      orderTLV.add(0);                                     // add empty TLV8 record with TAG=0 to be used as a record separator
-    }
-
-    displayOrder.setTLV(orderTLV);                         // set the "value" of displayOrder to be the fully-filled orderTLV object
   }
 };
 
