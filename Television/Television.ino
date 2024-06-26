@@ -127,7 +127,7 @@ struct HomeSpanTV : Service::Television {
       orderTLV.add(0);
     }
 
-    displayOrder = new Characteristic::DisplayOrder(&orderTLV,true);
+    displayOrder = new Characteristic::DisplayOrder(orderTLV,true);
 
     addLink(new TvSpeaker());                              // add TV Speaker
 
