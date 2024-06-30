@@ -2,7 +2,7 @@
 
 Comprehensive *Reference Sketches* showcasing some of the more complex HomeKit Services.  Built using the **[HomeSpan HomeKit Library](https://github.com/HomeSpan/HomeSpan)**, these sketches are designed to run on ESP32 devices under the Arduino IDE.  See [HomeSpan](https://github.com/HomeSpan/HomeSpan) for details.
 
-The following References Sketches have been tested under **iOS 16.5** (see note 2 below):  
+The following References Sketches have been tested under **iOS 17** (see note 2 below):  
 
 * **[Thermostat](Thermostat/Thermostat.ino)**
   * Implements a complete Homekit Thermostat providing heating/cooling/auto/off modes
@@ -34,6 +34,14 @@ The following References Sketches have been tested under **iOS 16.5** (see note 
   * Includes a "simulated" humidity sensor allowing you to change the *current* humidity via the Serial Monitor to observe how the Humidifier/Dehumidifier responds in different modes
   * Includes stub code for optional water level, fan rotation speed, and swing modes
   * Shows how to restrict allowed modes to Humidify-only or Dehumidify-only
+ 
+* **[Television](Television/Television.ino)**
+  * Implements an advanced Television control framework including:
+    * Power On/Off
+    * Input Source Selection, Enabling, and Renaming
+    * Input Source Ordering (including automatic alphabetizing)
+    * Volume Control (from iPhone Remote Control Widget)
+    * Remote Keys (from iPhone Remote Control Widget)  
   
 ### End Notes
 
