@@ -113,26 +113,26 @@ struct HomeSpanTV : Service::Television {
   Characteristic::RemoteKey remoteKey;                     // used to receive button presses from the Remote Control widget
   Characteristic::PowerModeSelection settingsKey;          // adds "View TV Settings" option to Selection Screen
   
-  SpanCharacteristic *tvName;                              // name of TV (will be instantiated in constructor below)
-  SpanCharacteristic *displayOrder;
+  SpanCharacteristic *tvName;                                   // name of TV (will be instantiated in constructor below)
+  Characteristic::DisplayOrder displayOrder{NULL_TLV,true};     // sets the order in which the Input Sources will be displayed in the Home App
 
   HomeSpanTV(const char *name) : Service::Television() {
     tvName = new Characteristic::ConfiguredName(name,true);
+    
     Serial.printf("Creating Television Service '%s'\n",tvName->getString());
 
     TLV8 orderTLV;                                         // create a temporary TLV8 object to store the order in which the Input Sources are to be displayed in the Home App
 
     for(int i=0;i<NUM_SOURCES;i++){
-      orderTLV.add(1,sourceData[i].ID);
+      orderTLV.add(1,sourceData[i].ID);                    // add ID of Input Source to TLV8 record used for displayOrder
       orderTLV.add(0);
+      
+      addLink(new TvInput(sourceData[i].ID,sourceData[i].name));    // add link for this Input Source
     }
 
-    displayOrder = new Characteristic::DisplayOrder(orderTLV,true);
+    displayOrder.setTLV(orderTLV);                         // update displayOrder with completed TLV8 records
 
-    addLink(new TvSpeaker());                              // add TV Speaker
-
-    for(int i=0;i<NUM_SOURCES;i++)
-      addLink(new TvInput(sourceData[i].ID,sourceData[i].name));  
+    addLink(new TvSpeaker());                              // add link for TV Speaker
   }
 
   boolean update() override {
@@ -166,7 +166,7 @@ struct HomeSpanTV : Service::Television {
         orderTLV.add(0);
       }
 
-    displayOrder->setTLV(orderTLV);                             // update displayOrder Characteristic with TLV8 record
+    displayOrder.setTLV(orderTLV);                              // update displayOrder Characteristic with TLV8 record
     }
     
     if(remoteKey.updated()){
