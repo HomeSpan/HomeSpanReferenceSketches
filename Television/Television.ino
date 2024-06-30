@@ -31,6 +31,8 @@
 //                                                   //
 ///////////////////////////////////////////////////////
 
+#define REQUIRED VERSION(1,9,1)
+
 #include "HomeSpan.h"
 
 struct sourceData_t {
